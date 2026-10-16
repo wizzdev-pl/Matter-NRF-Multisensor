@@ -47,9 +47,6 @@ void emberAfClusterInitCallback(EndpointId endpoint, ClusterId clusterId)
         case app::Clusters::DiagnosticLogs::Id:
             emberAfDiagnosticLogsClusterInitCallback(endpoint);
             break;
-        case app::Clusters::FixedLabel::Id:
-            emberAfFixedLabelClusterInitCallback(endpoint);
-            break;
         case app::Clusters::GeneralCommissioning::Id:
             emberAfGeneralCommissioningClusterInitCallback(endpoint);
             break;
@@ -79,9 +76,6 @@ void emberAfClusterInitCallback(EndpointId endpoint, ClusterId clusterId)
             break;
         case app::Clusters::ThreadNetworkDiagnostics::Id:
             emberAfThreadNetworkDiagnosticsClusterInitCallback(endpoint);
-            break;
-        case app::Clusters::UserLabel::Id:
-            emberAfUserLabelClusterInitCallback(endpoint);
             break;
         default:
             // Unrecognized cluster ID
@@ -115,11 +109,6 @@ void __attribute__((weak)) emberAfDescriptorClusterInitCallback(EndpointId endpo
     (void)endpoint;
 }
 void __attribute__((weak)) emberAfDiagnosticLogsClusterInitCallback(EndpointId endpoint)
-{
-    // To prevent warning
-    (void)endpoint;
-}
-void __attribute__((weak)) emberAfFixedLabelClusterInitCallback(EndpointId endpoint)
 {
     // To prevent warning
     (void)endpoint;
@@ -170,11 +159,6 @@ void __attribute__((weak)) emberAfSoftwareDiagnosticsClusterInitCallback(Endpoin
     (void)endpoint;
 }
 void __attribute__((weak)) emberAfThreadNetworkDiagnosticsClusterInitCallback(EndpointId endpoint)
-{
-    // To prevent warning
-    (void)endpoint;
-}
-void __attribute__((weak)) emberAfUserLabelClusterInitCallback(EndpointId endpoint)
 {
     // To prevent warning
     (void)endpoint;

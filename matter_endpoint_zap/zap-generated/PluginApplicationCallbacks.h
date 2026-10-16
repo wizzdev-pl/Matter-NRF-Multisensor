@@ -33,8 +33,6 @@ void MatterThreadNetworkDiagnosticsPluginServerInitCallback();
 void MatterAdministratorCommissioningPluginServerInitCallback();
 void MatterOperationalCredentialsPluginServerInitCallback();
 void MatterGroupKeyManagementPluginServerInitCallback();
-void MatterFixedLabelPluginServerInitCallback();
-void MatterUserLabelPluginServerInitCallback();
 void MatterBooleanStatePluginServerInitCallback();
 
 #define MATTER_PLUGINS_INIT                                     \
@@ -52,6 +50,4 @@ void MatterBooleanStatePluginServerInitCallback();
     MatterAdministratorCommissioningPluginServerInitCallback(); \
     MatterOperationalCredentialsPluginServerInitCallback();     \
     MatterGroupKeyManagementPluginServerInitCallback();         \
-    MatterFixedLabelPluginServerInitCallback();                 \
-    MatterUserLabelPluginServerInitCallback();                  \
     MatterBooleanStatePluginServerInitCallback();

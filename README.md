@@ -88,7 +88,7 @@ I: [SVR]Manual pairing code: [34970112332]
 
 Open that URL to display the QR code, or type the manual pairing code into the app instead. The setup passcode and discriminator behind them are set in `prj.conf` (`CONFIG_CHIP_DEVICE_SPAKE2_PASSCODE` / `CONFIG_CHIP_DEVICE_DISCRIMINATOR`).
 
-If the device was commissioned before, factory-reset it first: hold Button 1 for 3 s, or type `matter device factoryreset` in the console.
+If the device was commissioned before, factory-reset it first: hold BUTTON0 for 3 s, or type `matter device factoryreset` in the console.
 
 ### **Into Apple Home:**
 1. Open the Home app on iPhone.
@@ -116,29 +116,33 @@ If commissioning fails, power-cycle the Google hub and retry. This sometimes tak
 ---
 
 ## Working with configured device
-After commissioning, the device shows up in the ecosystem app as three contact sensors. No physical sensors are wired up yet, so the DK's buttons simulate them: press a button and the matching sensor changes between "Open" and "Closed" in the app.
+After commissioning, the device shows up in the ecosystem app as three contact sensors. No physical sensors are wired up yet, so the DK's buttons simulate them: press BUTTON1, BUTTON2 or BUTTON3 and the matching sensor changes between "Open" and "Closed" in the app.
 
-| Control         | Action                                                       |
-| --------------- | ------------------------------------------------------------ |
-| Button 1 (hold) | Hold 3 s: Thread network reset (full Matter factory reset)   |
-| Button 2        | Toggle contact sensor 1 (endpoint 1)                         |
-| Button 3        | Toggle contact sensor 2 (endpoint 2)                         |
-| Button 4        | Toggle contact sensor 3 (endpoint 3)                         |
-| LED 1           | Matter/Thread connectivity status (Nordic sample board code) |
-| LED 2           | Blinks while an endpoint is asked to identify itself         |
+| Control        | Action                                                       |
+| -------------- | ------------------------------------------------------------ |
+| BUTTON0 (hold) | Hold 3 s: Thread network reset (full Matter factory reset)   |
+| BUTTON1        | Toggle contact sensor 1 (endpoint 1)                         |
+| BUTTON2        | Toggle contact sensor 2 (endpoint 2)                         |
+| BUTTON3        | Toggle contact sensor 3 (endpoint 3)                         |
+| LED0           | Matter/Thread connectivity status (Nordic sample board code) |
+| LED1           | Blinks while an endpoint is asked to identify itself         |
+
+Buttons and LEDs are named as printed on the nRF54L15 DK (BUTTON0-3, LED0-3).
 
 ### Endpoints
 Each contact sensor is its own Matter endpoint, with the Contact Sensor device type (0x0015) and a `BooleanState` cluster:
 
-| Endpoint | Name (FixedLabel / default UserLabel `name`) | `StateValue = true` means | Button |
-| -------: | -------------------------------------------- | ------------------------- | ------ |
-|        1 | `Contact 1`                                  | contact closed            | 2      |
-|        2 | `Contact 2`                                  | contact closed            | 3      |
-|        3 | `Contact 3`                                  | contact closed            | 4      |
+| Endpoint | `StateValue = true` means | Button  |
+| -------: | ------------------------- | ------- |
+|        1 | contact closed            | BUTTON1 |
+|        2 | contact closed            | BUTTON2 |
+|        3 | contact closed            | BUTTON3 |
 
 The sensors are independent of each other. All three start **open** at boot (`StateValue = false`), and sensor state is not persisted across reboots. Ecosystems such as Apple Home show `true` as "Closed" and `false` as "Open".
 
-On first boot the device names each endpoint "Contact 1", "Contact 2" and "Contact 3", and the device itself "Matter multisensor". Names you set in the ecosystem app are kept.
+Ecosystem apps may list the three sensors in any order and give them their own names (for example "Contact Sensor", "Contact Sensor 2"), so the first tile in the app is not necessarily endpoint 1. Press each button once after commissioning and rename the tiles to match.
+
+On first boot the device names itself "Matter multisensor" (the Basic Information `NodeLabel`).
 
 ---
 
@@ -150,7 +154,7 @@ The application uses a hexagonal (ports & adapters) architecture, which keeps th
 - `src/domain/`: `ESensorId`, `EContactState` and `ContactSensorsDomain`, which holds every sensor's state (all start `Open`). `toggle()` flips one sensor and returns its new state.
 - `src/ports/`: the interfaces the adapters are written against:
   - `ContactSensorInputPort` (driving) and `ContactSensorObserver` (driven)
-  - the `ThreadNetworkResetInputPort` / `ThreadNetworkResetOutputPort` pair for the button 1 reset
+  - the `ThreadNetworkResetInputPort` / `ThreadNetworkResetOutputPort` pair for the BUTTON0 reset
 - `src/usecases/`:
   - `ToggleContactSensorUseCase` toggles a sensor in the domain and notifies every registered observer with the resulting state
   - `ResetThreadNetworkUseCase` relays the reset request
