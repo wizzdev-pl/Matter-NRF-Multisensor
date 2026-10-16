@@ -1,0 +1,75 @@
+---
+CompileFlags:
+  # Zephyr/west sysbuild writes this app's own compile_commands.json under its per-image build
+  # subdirectory, named after the project's source directory ("matter-nrf-multisensor"), not at
+  # the top-level build/ dir - that's the sysbuild orchestration dir, not a compile database.
+  # Update this if the repository is cloned into a directory with a different name.
+  CompilationDatabase: build/matter-nrf-multisensor
+  Add:
+    - -fconstexpr-steps=100000000
+    # Zephyr's LOG_* macros expand using a C++-extension VLA; nothing we can fix in our own code.
+    - -Wno-vla-cxx-extension
+  # These two GCC-only flags aren't understood by clang's driver. --query-driver (see
+  # .vscode/settings.json) stops that from being a hard parse failure, but clangd still surfaces
+  # the rejection as a diagnostic pinned to line 1 of every file - stripping them here instead
+  # removes that diagnostic at the source. (clang-tidy has the same problem from a different
+  # angle - see scripts/prepare_clang_tidy_db.py, which filters these out of its own copy of
+  # compile_commands.json for the same reason.)
+  Remove:
+    - -mfp16-format=ieee
+    - -fno-reorder-functions
+
+InlayHints:
+  BlockEnd: No
+  Designators: No
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
+  TypeNameLimit: 32
+
+Diagnostics:
+  UnusedIncludes: Strict
+
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - clang-analyzer-*
+      - concurrency-*
+      - cppcoreguidelines-*
+      - misc-*
+      - modernize-*
+      - performance-*
+      - portability-*
+      - readability-*
+    # See .clang-tidy for why the Zephyr-logging-macro-only entries below are disabled.
+    Remove:
+      - bugprone-easily-swappable-parameters
+      - cppcoreguidelines-pro-bounds-array-to-pointer-decay
+      - cppcoreguidelines-pro-bounds-pointer-arithmetic
+      - cppcoreguidelines-pro-type-reinterpret-cast
+      - modernize-use-trailing-return-type
+      - performance-avoid-endl
+      - misc-include-cleaner
+      - modernize-use-integer-sign-comparison
+      - modernize-use-ranges
+      - misc-const-correctness
+      - misc-redundant-expression
+      - misc-use-anonymous-namespace
+      - cppcoreguidelines-avoid-do-while
+      - cppcoreguidelines-pro-type-vararg
+      - cppcoreguidelines-pro-type-cstyle-cast
+      - cppcoreguidelines-avoid-c-arrays
+      - modernize-avoid-c-arrays
+      - readability-simplify-boolean-expr
+      - readability-function-cognitive-complexity
+      - readability-function-size
+      - clang-analyzer-optin.cplusplus.UninitializedObject
+    FastCheckFilter: None
+
+# Note: an If/PathMatch fragment scoping SDK paths (e.g. ~/ncs/...) doesn't belong here - clangd
+# discovers project .clangd files by walking up from the *file being opened*, so this file is never
+# even considered for anything outside this repo's own directory tree (verified: opening an nRF
+# SDK file directly picks up none of the settings above). Silencing checks for the NCS SDK/Zephyr
+# tree has to live in clangd's user-global config (~/.config/clangd/config.yaml) instead, since
+# that tier applies regardless of the file's location - see that file's comment for the same
+# rationale, machine-wide rather than per-repo.
