@@ -1,0 +1,13 @@
+{
+    // Without --query-driver, clangd's driver (unlike arm-zephyr-eabi-g++ itself) doesn't know
+    // this cross-compiler's system include paths or tolerate its GCC-only flags
+    // (-mfp16-format=ieee, -fno-reorder-functions), so almost every file fails to build a preamble
+    // and shows as entirely red. --query-driver lets clangd invoke the real compiler recorded in
+    // compile_commands.json to ask for its resolved include paths (same idea as
+    // scripts/prepare_clang_tidy_db.py does for clang-tidy) and tolerate its unknown flags.
+    // Glob matches any user's default NCS toolchain manager install location
+    // (~/ncs/toolchains/<hash>/...); adjust if your toolchain lives elsewhere.
+    "clangd.arguments": [
+        "--query-driver=/home/*/ncs/toolchains/*/opt/zephyr-sdk/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-*"
+    ]
+}
