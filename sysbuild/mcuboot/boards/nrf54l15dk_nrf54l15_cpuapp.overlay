@@ -1,0 +1,33 @@
+/*
+ * Copyright (c) 2025 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ */
+
+/* Same custom partition layout the app uses (boot_partition@0x0/52K, slot0_partition@0xD000, ...
+ * matching pm_static_nrf54l15dk_nrf54l15_cpuapp.yml). Without this, MCUboot falls back to the
+ * board's default zephyr,code-partition = &slot0_partition (0x10000) instead of &boot_partition
+ * (0x0), so MCUboot's own vector table never lands at the true CPU reset address and it never
+ * actually runs. */
+#include <samples/matter/nrf54l15_cpuapp_partitions.dtsi>
+
+/ {
+	chosen {
+		nordic,pm-ext-flash = &mx25r64;
+		zephyr,code-partition = &boot_partition;
+	};
+};
+
+/* restore full RRAM and SRAM space - by default some parts are dedicated to FLRP */
+&cpuapp_rram {
+	reg = <0x0 DT_SIZE_K(1524)>;
+};
+
+&cpuapp_sram {
+	reg = <0x20000000 DT_SIZE_K(256)>;
+	ranges = <0x0 0x20000000 0x40000>;
+};
+
+&mx25r64 {
+	status = "okay";
+};
