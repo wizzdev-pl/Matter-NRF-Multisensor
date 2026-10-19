@@ -6,12 +6,12 @@ This repository contains the WizzDev Matter nRF Multisensor, an open-source fami
 The project serves two purposes:
 
 - **Client demonstrations:** a working device that shows what we can build with Matter, Thread and nRF
-- **New hire training:** a readable codebase that shows how a Matter device is put together end to end: the Matter data model (endpoints, device types and clusters generated with ZAP), Thread networking and commissioning, low-power sleepy-node behaviour, and a hexagonal (ports & adapters) application architecture
+- **New hire training:** a readable codebase that shows how a Matter device is put together end to end: the Matter data model (endpoints, device types and clusters generated with ZAP), Thread networking and commissioning, and a hexagonal (ports & adapters) application architecture
 
 The planned modules are:
 
-- **Low-power sensors and buttons (Sleepy Nodes):** deep sleep with event-driven wake-up for buttons (Contact Sensor endpoint) and temperature sensors, for long battery life
-- **E-paper display:** a low-power e-paper screen showing the device state in real time, optimised for battery power
+- **Sensors and buttons:** buttons exposed as Contact Sensor endpoints, and temperature sensors
+- **E-paper display:** an e-paper screen showing the device state in real time
 - **Light sensor and lighting control:** an ambient light sensor that controls an LED automatically based on the surrounding brightness
 - **Ventilation and fan speed control:** PWM fan control, with an encoder for manual speed adjustment
 - **Thermostat:** a dedicated thermostat endpoint, configured with the encoder, driving a heating relay through a control algorithm
@@ -19,7 +19,7 @@ The planned modules are:
 
 | Module                            | Matter device type                                          | Status                                                                   |
 | --------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Low-power sensors and buttons     | Contact Sensor (0x0015), Temperature Sensor (0x0302)        | Contact sensors done (simulated by dev kit buttons), temperature planned |
+| Sensors and buttons               | Contact Sensor (0x0015), Temperature Sensor (0x0302)        | Contact sensors done (simulated by dev kit buttons), temperature planned |
 | E-paper display                   | none (local display)                                        | Planned                                                                  |
 | Light sensor and lighting control | Light Sensor (0x0106)                                       | Planned                                                                  |
 | Ventilation and fan speed control | Fan (0x002B)                                                | Planned                                                                  |
@@ -88,7 +88,7 @@ I: [SVR]Manual pairing code: [34970112332]
 
 Open that URL to display the QR code, or type the manual pairing code into the app instead. The setup passcode and discriminator behind them are set in `prj.conf` (`CONFIG_CHIP_DEVICE_SPAKE2_PASSCODE` / `CONFIG_CHIP_DEVICE_DISCRIMINATOR`).
 
-If the device was commissioned before, factory-reset it first: hold Button 1 for 3 s, or type `matter device factoryreset` in the console.
+If the device was commissioned before, factory-reset it first: hold BUTTON0 for 3 s, or type `matter device factoryreset` in the console.
 
 ### **Into Apple Home:**
 1. Open the Home app on iPhone.
@@ -116,29 +116,33 @@ If commissioning fails, power-cycle the Google hub and retry. This sometimes tak
 ---
 
 ## Working with configured device
-After commissioning, the device shows up in the ecosystem app as three contact sensors. No physical sensors are wired up yet, so the DK's buttons simulate them: press a button and the matching sensor changes between "Open" and "Closed" in the app.
+After commissioning, the device shows up in the ecosystem app as three contact sensors. No physical sensors are wired up yet, so the DK's buttons simulate them: press BUTTON1, BUTTON2 or BUTTON3 and the matching sensor changes between "Open" and "Closed" in the app.
 
-| Control         | Action                                                       |
-| --------------- | ------------------------------------------------------------ |
-| Button 1 (hold) | Hold 3 s: Thread network reset (full Matter factory reset)   |
-| Button 2        | Toggle contact sensor 1 (endpoint 1)                         |
-| Button 3        | Toggle contact sensor 2 (endpoint 2)                         |
-| Button 4        | Toggle contact sensor 3 (endpoint 3)                         |
-| LED 1           | Matter/Thread connectivity status (Nordic sample board code) |
-| LED 2 / 3 / 4   | Lit while contact sensor 1 / 2 / 3 is closed                 |
+| Control        | Action                                                       |
+| -------------- | ------------------------------------------------------------ |
+| BUTTON0 (hold) | Hold 3 s: Thread network reset (full Matter factory reset)   |
+| BUTTON1        | Toggle contact sensor 1 (endpoint 1)                         |
+| BUTTON2        | Toggle contact sensor 2 (endpoint 2)                         |
+| BUTTON3        | Toggle contact sensor 3 (endpoint 3)                         |
+| LED0           | Matter/Thread connectivity status (Nordic sample board code) |
+| LED1           | Blinks while an endpoint is asked to identify itself         |
+
+Buttons and LEDs are named as printed on the nRF54L15 DK (BUTTON0-3, LED0-3).
 
 ### Endpoints
 Each contact sensor is its own Matter endpoint, with the Contact Sensor device type (0x0015) and a `BooleanState` cluster:
 
-| Endpoint | Name (FixedLabel / default UserLabel `name`) | `StateValue = true` means | Button | LED   |
-| -------: | -------------------------------------------- | ------------------------- | ------ | ----- |
-|        1 | `Contact 1`                                  | contact closed            | 2      | LED 2 |
-|        2 | `Contact 2`                                  | contact closed            | 3      | LED 3 |
-|        3 | `Contact 3`                                  | contact closed            | 4      | LED 4 |
+| Endpoint | `StateValue = true` means | Button  |
+| -------: | ------------------------- | ------- |
+|        1 | contact closed            | BUTTON1 |
+|        2 | contact closed            | BUTTON2 |
+|        3 | contact closed            | BUTTON3 |
 
-The sensors are independent of each other. All three start **open** at boot (`StateValue = false`, LEDs off), and sensor state is not persisted across reboots. Ecosystems such as Apple Home show `true` as "Closed" and `false` as "Open".
+The sensors are independent of each other. All three start **open** at boot (`StateValue = false`), and sensor state is not persisted across reboots. Ecosystems such as Apple Home show `true` as "Closed" and `false` as "Open".
 
-On first boot the device names each endpoint "Contact 1", "Contact 2" and "Contact 3", and the device itself "Matter multisensor". Names you set in the ecosystem app are kept.
+Ecosystem apps may list the three sensors in any order and give them their own names (for example "Contact Sensor", "Contact Sensor 2"), so the first tile in the app is not necessarily endpoint 1. Press each button once after commissioning and rename the tiles to match.
+
+On first boot the device names itself "Matter multisensor" (the Basic Information `NodeLabel`).
 
 ---
 
@@ -150,13 +154,12 @@ The application uses a hexagonal (ports & adapters) architecture, which keeps th
 - `src/domain/`: `ESensorId`, `EContactState` and `ContactSensorsDomain`, which holds every sensor's state (all start `Open`). `toggle()` flips one sensor and returns its new state.
 - `src/ports/`: the interfaces the adapters are written against:
   - `ContactSensorInputPort` (driving) and `ContactSensorObserver` (driven)
-  - the `ThreadNetworkResetInputPort` / `ThreadNetworkResetOutputPort` pair for the button 1 reset
+  - the `ThreadNetworkResetInputPort` / `ThreadNetworkResetOutputPort` pair for the BUTTON0 reset
 - `src/usecases/`:
   - `ToggleContactSensorUseCase` toggles a sensor in the domain and notifies every registered observer with the resulting state
   - `ResetThreadNetworkUseCase` relays the reset request
 - `src/adapters/`:
   - `ButtonAdapter`: button presses stand in for sensor signals; it will be replaced by real sensors later
-  - `LedAdapter`: sets each LED from the domain state; development only
   - `MatterThreadAdapter`: owns the Matter/Thread stack and publishes each sensor on its endpoint
 - `src/main.cpp` constructs everything above as locals of `main()` and wires them together.
 
@@ -169,10 +172,8 @@ The data model lives in `matter_endpoint_zap/multisensor.zap`. The build uses th
 west zap-generate -z matter_endpoint_zap/multisensor.zap
 ```
 
-### Power
-The device is a Thread **Sleepy End Device** and a Matter **Long-Idle-Time Intermittently Connected Device (LIT ICD)**. It stays joined to the Thread network at all times, but keeps its radio receiver off most of the time and only wakes it briefly, on a schedule, to check whether its Thread parent has anything for it. This uses less energy than a "deep sleep" with a disconnect/reconnect cycle.
-
-A button press wakes the CPU immediately through a GPIO interrupt, and the resulting `BooleanState` report goes out to the Thread parent right away. The same will apply once real sensors replace the DK buttons. Whenever there is nothing to do, Zephyr's idle thread puts the CPU into a low-power wait state (WFE/WFI).
+### Thread role
+The device is an always-on, router-capable Thread device (Full Thread Device). Its radio receiver stays on, so it answers controllers immediately and can act as a Thread router that extends the mesh for other devices. It is meant to be powered from USB or mains.
 
 ---
 

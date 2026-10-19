@@ -1,0 +1,56 @@
+# Mirrors the check list in .clangd's Diagnostics.ClangTidy section, so clang-tidy on the
+# command line (via `make static-analysis`) agrees with what clangd shows live in the editor.
+# Keep the two in sync when either changes.
+#
+# The checks below are disabled specifically because Zephyr's LOG_INF/LOG_ERR/LOG_WRN and
+# LOG_MODULE_DECLARE/LOG_MODULE_REGISTER macros expand into internal cbprintf-packaging code
+# (a variable-length array, do-while wrappers, vararg forwarding, C-style casts, dozens of locals
+# that could be const, ...) that clang-tidy attributes to the macro's call site in our file, not
+# to Zephyr's own headers - every one of these checks fires purely from that expansion, with zero
+# real findings from code we actually wrote, and would otherwise fire on every LOG_* call in the
+# codebase. (cppcoreguidelines-avoid-c-arrays/modernize-avoid-c-arrays did also catch one genuine
+# C-array - matter_thread_adapter.h's m_identifyClusters - fixed by switching to std::array before
+# these were disabled; if you add a new C-style array, clangd/clang-tidy won't warn about it.)
+# cppcoreguidelines-avoid-non-const-global-variables is a partial exception (it also flags the
+# macros' internal globals) - kept enabled since it also catches genuine globals (see the targeted
+# NOLINT on button_adapter.cpp's s_pButtonAdapter and on each LOG_MODULE_* line).
+#
+# clang-analyzer-optin.cplusplus.UninitializedObject is disabled separately: unlike regular
+# clang-tidy checks, its path-sensitive findings don't respect HeaderFilterRegex below, so it can
+# report directly against a vendor header's own file:line even though nothing in src/ is involved
+# (seen flagging Matter SDK's ConcreteClusterPath - its own comment says the field is deliberately
+# left uninitialized). Not something we can fix or should suppress per-call-site.
+Checks: >
+  bugprone-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -modernize-use-trailing-return-type,
+  -performance-avoid-endl,
+  -misc-include-cleaner,
+  -modernize-use-integer-sign-comparison,
+  -modernize-use-ranges,
+  -misc-const-correctness,
+  -misc-redundant-expression,
+  -misc-use-anonymous-namespace,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -cppcoreguidelines-avoid-c-arrays,
+  -modernize-avoid-c-arrays,
+  -readability-simplify-boolean-expr,
+  -readability-function-cognitive-complexity,
+  -readability-function-size,
+  -clang-analyzer-optin.cplusplus.UninitializedObject
+WarningsAsErrors: ''
+HeaderFilterRegex: '^src/'
+FormatStyle: none

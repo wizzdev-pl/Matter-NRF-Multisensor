@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        // Board config, Kconfig/devicetree editing, build/flash/debug UI for west/sysbuild.
+        "nordic-semiconductor.nrf-connect-extension-pack",
+        // C/C++ IntelliSense, backed by .clangd (compile_commands.json path, clang-tidy checks).
+        "llvm-vs-code-extensions.vscode-clangd"
+    ],
+    "unwantedRecommendations": [
+        // Conflicts with clangd's IntelliSense over the same C/C++ files if both are active.
+        "ms-vscode.cpptools"
+    ]
+}

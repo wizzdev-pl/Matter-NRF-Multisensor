@@ -1,0 +1,13 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+AlignTrailingComments: false
+SpacesBeforeTrailingComments: 2
+BreakBeforeBraces: Allman
+PointerAlignment: Left
+IndentCaseLabels: true
+ColumnLimit: 0
+AccessModifierOffset: -4
+BreakConstructorInitializers: AfterColon
+SpaceBeforeCtorInitializerColon: false
+FixNamespaceComments: true
+AllowShortFunctionsOnASingleLine: None
