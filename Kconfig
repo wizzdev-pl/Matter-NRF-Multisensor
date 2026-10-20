@@ -19,6 +19,14 @@ endchoice
 
 endif # OPENTHREAD
 
+config APP_TEMPERATURE_HUMIDITY_SAMPLE_PERIOD_S
+	int "Temperature/humidity sensor sample period [s]"
+	default 30
+	range 1 3600
+	help
+	  How often the temperature/humidity sensor is read and published on Matter endpoints
+	  4 and 5. The sensor is a placeholder producing made-up values until the part is chosen.
+
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.features"
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.defaults"
 source "$(ZEPHYR_NRF_MODULE_DIR)/samples/matter/common/src/Kconfig"

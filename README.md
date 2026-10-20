@@ -19,7 +19,7 @@ The planned modules are:
 
 | Module                            | Matter device type                                          | Status                                                                   |
 | --------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Sensors and buttons               | Contact Sensor (0x0015), Temperature Sensor (0x0302)        | Contact sensors done (simulated by dev kit buttons), temperature planned |
+| Sensors and buttons               | Contact Sensor (0x0015), Temperature Sensor (0x0302), Humidity Sensor (0x0307) | Contact sensors done (simulated by dev kit buttons); temperature/humidity endpoints done (placeholder values), sensor part not chosen yet |
 | E-paper display                   | none (local display)                                        | Planned                                                                  |
 | Light sensor and lighting control | Light Sensor (0x0106)                                       | Planned                                                                  |
 | Ventilation and fan speed control | Fan (0x002B)                                                | Planned                                                                  |
@@ -116,7 +116,7 @@ If commissioning fails, power-cycle the Google hub and retry. This sometimes tak
 ---
 
 ## Working with configured device
-After commissioning, the device shows up in the ecosystem app as three contact sensors. No physical sensors are wired up yet, so the DK's buttons simulate them: press BUTTON1, BUTTON2 or BUTTON3 and the matching sensor changes between "Open" and "Closed" in the app.
+After commissioning, the device shows up in the ecosystem app as three contact sensors, a temperature sensor and a humidity sensor. No temperature/humidity sensor is fitted yet either, so those two show made-up placeholder values (see [Temperature and humidity sensor](#temperature-and-humidity-sensor)). No physical contact sensors are wired up yet, so the DK's buttons simulate them: press BUTTON1, BUTTON2 or BUTTON3 and the matching sensor changes between "Open" and "Closed" in the app.
 
 | Control        | Action                                                       |
 | -------------- | ------------------------------------------------------------ |
@@ -142,7 +142,28 @@ The sensors are independent of each other. All three start **open** at boot (`St
 
 Ecosystem apps may list the three sensors in any order and give them their own names (for example "Contact Sensor", "Contact Sensor 2"), so the first tile in the app is not necessarily endpoint 1. Press each button once after commissioning and rename the tiles to match.
 
+Temperature and humidity each have their own endpoint:
+
+| Endpoint | Device type                 | Cluster                                         | `MeasuredValue` unit | Range          |
+| -------: | --------------------------- | ----------------------------------------------- | -------------------- | -------------- |
+|        4 | Temperature Sensor (0x0302) | Temperature Measurement (0x0402)                | 0.01 °C              | −40 to 125 °C  |
+|        5 | Humidity Sensor (0x0307)    | Relative Humidity Measurement (0x0405)          | 0.01 %RH             | 0 to 100 %RH   |
+
+`MeasuredValue` is `null` (unknown) at boot until the first reading arrives, and for a value outside the range. Readings are not persisted. To read them with chip-tool:
+
+```bash
+chip-tool temperaturemeasurement read measured-value <node-id> 4
+chip-tool relativehumiditymeasurement read measured-value <node-id> 5
+```
+
 On first boot the device names itself "Matter multisensor" (the Basic Information `NodeLabel`).
+
+### Temperature and humidity sensor
+The temperature/humidity sensor part has not been chosen yet, so `PlaceholderTemperatureHumiditySensorAdapter` stands in for it. It "reads" made-up values and passes them on exactly as a real sensor adapter would: starting at 21.00 °C / 45.00 %RH, each reading goes up by 0.10 °C / 0.50 %RH, wrapping back after 20 readings (22.90 °C / 54.50 %RH at the top), so you can see the endpoints change.
+
+A reading is taken every 30 s by default; change it with `CONFIG_APP_TEMPERATURE_HUMIDITY_SAMPLE_PERIOD_S` in `prj.conf` (1 to 3600 s).
+
+When the part is chosen, replace the placeholder with an adapter that reads it (for example through the Zephyr sensor API) and reports each reading through `TemperatureHumidityInputPort`; nothing else needs to change. If the part's measurement range is narrower than the one above, also update `MinMeasuredValue`/`MaxMeasuredValue` in the `.zap` file and the matching limits in `src/domain/temperature_humidity_domain.h`.
 
 ---
 
@@ -151,15 +172,20 @@ The application uses a hexagonal (ports & adapters) architecture, which keeps th
 
 ### TODO: add drawio graph
 
-- `src/domain/`: `ESensorId`, `EContactState` and `ContactSensorsDomain`, which holds every sensor's state (all start `Open`). `toggle()` flips one sensor and returns its new state.
+- `src/domain/`:
+  - `ESensorId`, `EContactState` and `ContactSensorsDomain`, which holds every sensor's state (all start `Open`). `toggle()` flips one sensor and returns its new state.
+  - `TemperatureHumidityReading` and `TemperatureHumidityDomain`, which holds the latest temperature/humidity reading (starts unknown). `update()` range-checks a reading, stores it and returns it.
 - `src/ports/`: the interfaces the adapters are written against:
   - `ContactSensorInputPort` (driving) and `ContactSensorObserver` (driven)
+  - `TemperatureHumidityInputPort` (driving) and `TemperatureHumidityObserver` (driven)
   - the `ThreadNetworkResetInputPort` / `ThreadNetworkResetOutputPort` pair for the BUTTON0 reset
 - `src/usecases/`:
   - `ToggleContactSensorUseCase` toggles a sensor in the domain and notifies every registered observer with the resulting state
+  - `UpdateTemperatureHumidityUseCase` passes a reading through the domain and notifies every registered observer with the validated result
   - `ResetThreadNetworkUseCase` relays the reset request
 - `src/adapters/`:
   - `ButtonAdapter`: button presses stand in for sensor signals; it will be replaced by real sensors later
+  - `PlaceholderTemperatureHumiditySensorAdapter`: periodically reports made-up temperature/humidity readings; it will be replaced by the real sensor later
   - `MatterThreadAdapter`: owns the Matter/Thread stack and publishes each sensor on its endpoint
 - `src/main.cpp` constructs everything above as locals of `main()` and wires them together.
 
