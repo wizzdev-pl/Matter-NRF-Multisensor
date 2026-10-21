@@ -16,7 +16,10 @@
 #include <clusters/BasicInformation/AttributeIds.h>
 #include <clusters/BasicInformation/ClusterId.h>
 #include <cstddef>
+#include <cstdint>
 #include <lib/core/TLV.h>
+#include <platform/PlatformManager.h>
+#include <protocols/interaction_model/StatusCode.h>
 
 #include <zephyr/logging/log.h>
 
@@ -92,6 +95,8 @@ CHIP_ERROR MatterThreadAdapter::init()
     {
         ReturnErrorOnFailure(identifyCluster.Init());
     }
+    ReturnErrorOnFailure(m_temperatureIdentifyCluster.Init());
+    ReturnErrorOnFailure(m_humidityIdentifyCluster.Init());
 
     return CHIP_NO_ERROR;
 }
@@ -111,6 +116,39 @@ void MatterThreadAdapter::onContactStateChanged(domain::ESensorId sensorId, doma
             setEndpointState(sensorEndpoint.endpointId, state == domain::EContactState::Closed);
             return;
         }
+    }
+}
+
+void MatterThreadAdapter::onTemperatureHumidityChanged(const domain::TemperatureHumidityReading& reading)
+{
+    namespace TemperatureMeasurement = chip::app::Clusters::TemperatureMeasurement;
+    namespace RelativeHumidityMeasurement = chip::app::Clusters::RelativeHumidityMeasurement;
+    using chip::Protocols::InteractionModel::Status;
+
+    /* These clusters are plain ZAP attribute storage, whose accessors must run with the Matter stack
+     * locked; tasks posted with Nrf::PostTask run on the app thread without it. */
+    chip::DeviceLayer::StackLock lock;
+
+    /* The domain only passes on values within its MIN_/MAX_ limits, which fit int16_t/uint16_t, so
+     * the narrowing casts below cannot wrap. */
+    const Status temperatureStatus =
+        reading.temperatureCentiCelsius.has_value()
+            ? TemperatureMeasurement::Attributes::MeasuredValue::Set(
+                  TEMPERATURE_ENDPOINT_ID, static_cast<int16_t>(*reading.temperatureCentiCelsius))
+            : TemperatureMeasurement::Attributes::MeasuredValue::SetNull(TEMPERATURE_ENDPOINT_ID);
+    if (temperatureStatus != Status::Success)
+    {
+        LOG_ERR("Updating temperature on endpoint %u failed", static_cast<unsigned>(TEMPERATURE_ENDPOINT_ID));
+    }
+
+    const Status humidityStatus =
+        reading.humidityCentiPercent.has_value()
+            ? RelativeHumidityMeasurement::Attributes::MeasuredValue::Set(
+                  HUMIDITY_ENDPOINT_ID, static_cast<uint16_t>(*reading.humidityCentiPercent))
+            : RelativeHumidityMeasurement::Attributes::MeasuredValue::SetNull(HUMIDITY_ENDPOINT_ID);
+    if (humidityStatus != Status::Success)
+    {
+        LOG_ERR("Updating humidity on endpoint %u failed", static_cast<unsigned>(HUMIDITY_ENDPOINT_ID));
     }
 }
 

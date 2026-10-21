@@ -71,8 +71,14 @@ void emberAfClusterInitCallback(EndpointId endpoint, ClusterId clusterId)
         case app::Clusters::OperationalCredentials::Id:
             emberAfOperationalCredentialsClusterInitCallback(endpoint);
             break;
+        case app::Clusters::RelativeHumidityMeasurement::Id:
+            emberAfRelativeHumidityMeasurementClusterInitCallback(endpoint);
+            break;
         case app::Clusters::SoftwareDiagnostics::Id:
             emberAfSoftwareDiagnosticsClusterInitCallback(endpoint);
+            break;
+        case app::Clusters::TemperatureMeasurement::Id:
+            emberAfTemperatureMeasurementClusterInitCallback(endpoint);
             break;
         case app::Clusters::ThreadNetworkDiagnostics::Id:
             emberAfThreadNetworkDiagnosticsClusterInitCallback(endpoint);
@@ -153,7 +159,17 @@ void __attribute__((weak)) emberAfOperationalCredentialsClusterInitCallback(Endp
     // To prevent warning
     (void)endpoint;
 }
+void __attribute__((weak)) emberAfRelativeHumidityMeasurementClusterInitCallback(EndpointId endpoint)
+{
+    // To prevent warning
+    (void)endpoint;
+}
 void __attribute__((weak)) emberAfSoftwareDiagnosticsClusterInitCallback(EndpointId endpoint)
+{
+    // To prevent warning
+    (void)endpoint;
+}
+void __attribute__((weak)) emberAfTemperatureMeasurementClusterInitCallback(EndpointId endpoint)
 {
     // To prevent warning
     (void)endpoint;

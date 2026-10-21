@@ -2,6 +2,8 @@
 
 #include "contact_sensor_observer.h"
 #include "contact_sensors_domain.h"
+#include "temperature_humidity_domain.h"
+#include "temperature_humidity_observer.h"
 #include "thread_network_reset_output_port.h"
 
 #include "identify.h"
@@ -14,9 +16,12 @@
 namespace adapters
 {
 
-/* owns the Matter and Thread stack and publishes each contact sensor's state on its own Matter
- * Contact Sensor endpoint's BooleanState cluster. */
-class MatterThreadAdapter : public ports::ContactSensorObserver, public ports::ThreadNetworkResetOutputPort
+/* owns the Matter and Thread stack, publishes each contact sensor's state on its own Matter
+ * Contact Sensor endpoint's BooleanState cluster, and publishes the temperature/humidity reading on the
+ * Temperature Sensor and Humidity Sensor endpoints. */
+class MatterThreadAdapter : public ports::ContactSensorObserver,
+                            public ports::TemperatureHumidityObserver,
+                            public ports::ThreadNetworkResetOutputPort
 {
 public:
     /* Prepares the Matter stack and registers the endpoints' Identify clusters. Must be called
@@ -27,6 +32,10 @@ public:
     CHIP_ERROR startServer();
 
     void onContactStateChanged(domain::ESensorId sensorId, domain::EContactState state) override;
+
+    /* Writes the reading to endpoint 4's Temperature Measurement and endpoint 5's Relative Humidity
+     * Measurement MeasuredValue; an unknown value is published as null. */
+    void onTemperatureHumidityChanged(const domain::TemperatureHumidityReading& reading) override;
 
     /* Resets the Thread network connection. Implemented as a full Matter factory reset
      * (chip::Server::ScheduleFactoryReset()) - the same
@@ -47,6 +56,10 @@ private:
         {domain::ESensorId::Sensor3, 3},
     }};
 
+    /* Temperature Sensor and Humidity Sensor endpoints (matter_endpoint_zap/multisensor.zap). */
+    static constexpr chip::EndpointId TEMPERATURE_ENDPOINT_ID = 4;
+    static constexpr chip::EndpointId HUMIDITY_ENDPOINT_ID = 5;
+
     static void setEndpointState(chip::EndpointId endpointId, bool closed);
 
     /* Sets the device's Basic Information cluster "NodeLabel" - the name ecosystems show for the
@@ -62,6 +75,9 @@ private:
         Nrf::Matter::IdentifyCluster(SENSOR_ENDPOINTS[1].endpointId),
         Nrf::Matter::IdentifyCluster(SENSOR_ENDPOINTS[2].endpointId),
     };
+
+    Nrf::Matter::IdentifyCluster m_temperatureIdentifyCluster{TEMPERATURE_ENDPOINT_ID};
+    Nrf::Matter::IdentifyCluster m_humidityIdentifyCluster{HUMIDITY_ENDPOINT_ID};
 };
 
 } /* namespace adapters */

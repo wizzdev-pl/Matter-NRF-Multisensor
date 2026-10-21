@@ -34,6 +34,8 @@ void MatterAdministratorCommissioningPluginServerInitCallback();
 void MatterOperationalCredentialsPluginServerInitCallback();
 void MatterGroupKeyManagementPluginServerInitCallback();
 void MatterBooleanStatePluginServerInitCallback();
+void MatterTemperatureMeasurementPluginServerInitCallback();
+void MatterRelativeHumidityMeasurementPluginServerInitCallback();
 
 #define MATTER_PLUGINS_INIT                                     \
     MatterIdentifyPluginServerInitCallback();                   \
@@ -50,4 +52,6 @@ void MatterBooleanStatePluginServerInitCallback();
     MatterAdministratorCommissioningPluginServerInitCallback(); \
     MatterOperationalCredentialsPluginServerInitCallback();     \
     MatterGroupKeyManagementPluginServerInitCallback();         \
-    MatterBooleanStatePluginServerInitCallback();
+    MatterBooleanStatePluginServerInitCallback();               \
+    MatterTemperatureMeasurementPluginServerInitCallback();     \
+    MatterRelativeHumidityMeasurementPluginServerInitCallback();

@@ -1,8 +1,3 @@
-#
-# Copyright (c) 2025 Nordic Semiconductor
-#
-# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
-#
 mainmenu "Matter nRF Multisensor Application"
 
 # Always-on, router-capable Thread device (Full Thread Device): the radio receiver stays on, so
@@ -18,6 +13,14 @@ choice OPENTHREAD_DEVICE_TYPE
 endchoice
 
 endif # OPENTHREAD
+
+config APP_TEMPERATURE_HUMIDITY_SAMPLE_PERIOD_S
+	int "Temperature/humidity sensor sample period [s]"
+	default 1
+	range 1 3600
+	help
+	  How often the temperature/humidity sensor is read and published on Matter endpoints
+	  4 and 5. The sensor is a placeholder producing made-up values until the part is chosen.
 
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.features"
 source "$(ZEPHYR_CONNECTEDHOMEIP_MODULE_DIR)/config/nrfconnect/chip-module/Kconfig.defaults"
