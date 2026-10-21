@@ -159,9 +159,9 @@ chip-tool relativehumiditymeasurement read measured-value <node-id> 5
 On first boot the device names itself "Matter multisensor" (the Basic Information `NodeLabel`).
 
 ### Temperature and humidity sensor
-The temperature/humidity sensor part has not been chosen yet, so `PlaceholderTemperatureHumiditySensorAdapter` stands in for it. It "reads" made-up values and passes them on exactly as a real sensor adapter would: starting at 21.00 °C / 45.00 %RH, each reading goes up by 0.10 °C / 0.50 %RH, wrapping back after 20 readings (22.90 °C / 54.50 %RH at the top), so you can see the endpoints change.
+The temperature/humidity sensor part has not been chosen yet, so `PlaceholderTemperatureHumiditySensorAdapter` stands in for it. It "reads" made-up values and passes them on exactly as a real sensor adapter would: starting at 21.00 °C / 45.00 %RH, each reading goes up by 0.30 °C / 0.50 %RH, wrapping back after 20 readings (26.70 °C / 54.50 %RH at the top), so you can see the endpoints change.
 
-A reading is taken every 30 s by default; change it with `CONFIG_APP_TEMPERATURE_HUMIDITY_SAMPLE_PERIOD_S` in `prj.conf` (1 to 3600 s).
+A reading is taken every second by default. The period is the `APP_TEMPERATURE_HUMIDITY_SAMPLE_PERIOD_S` option (1 to 3600 s), defined with its default in the root `Kconfig` file. `prj.conf` does not set it, so the build uses that default; the value a build actually used is in `build/matter-nrf-multisensor/zephyr/include/generated/zephyr/autoconf.h`. To change it, either change `default` in `Kconfig`, or override it by adding a line such as `CONFIG_APP_TEMPERATURE_HUMIDITY_SAMPLE_PERIOD_S=10` to `prj.conf`, then rebuild.
 
 When the part is chosen, replace the placeholder with an adapter that reads it (for example through the Zephyr sensor API) and reports each reading through `TemperatureHumidityInputPort`; nothing else needs to change. If the part's measurement range is narrower than the one above, also update `MinMeasuredValue`/`MaxMeasuredValue` in the `.zap` file and the matching limits in `src/domain/temperature_humidity_domain.h`.
 

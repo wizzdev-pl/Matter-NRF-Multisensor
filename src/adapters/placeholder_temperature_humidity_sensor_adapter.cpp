@@ -5,10 +5,10 @@
 namespace
 {
 
-/* The placeholder readings start at 21.00 °C / 45.00 %RH and go up by 0.10 °C / 0.50 %RH per sample,
- * wrapping back to the start after STEP_COUNT samples (22.90 °C / 54.50 %RH at the top). */
+/* The placeholder readings start at 21.00 °C / 45.00 %RH and go up by 0.30 °C / 0.50 %RH per sample,
+ * wrapping back to the start after STEP_COUNT samples (26.70 °C / 54.50 %RH at the top). */
 constexpr int32_t BASE_TEMPERATURE_CENTI_CELSIUS = 2100;
-constexpr int32_t TEMPERATURE_STEP_CENTI_CELSIUS = 10;
+constexpr int32_t TEMPERATURE_STEP_CENTI_CELSIUS = 30;
 constexpr int32_t BASE_HUMIDITY_CENTI_PERCENT = 4500;
 constexpr int32_t HUMIDITY_STEP_CENTI_PERCENT = 50;
 constexpr uint32_t STEP_COUNT = 20;
