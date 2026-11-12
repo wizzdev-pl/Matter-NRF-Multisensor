@@ -26,6 +26,8 @@ The planned modules are:
 | Thermostat                        | Thermostat (0x0301)                                         | Planned                                                                  |
 | Visual signalling and actuator    | Extended Color Light (0x010D), On/Off Plug-in Unit (0x010A) | Planned                                                                  |
 
+![multisensor_stages](docs/wizzdev_multisensor_stages.webp)
+
 ## Prerequisites
 Before building, install the following on your PC (the commands below were used on Linux):
 
@@ -149,7 +151,7 @@ On first boot the device names itself "Matter multisensor" (the Basic Informatio
 ## Project structure
 The application uses a hexagonal (ports & adapters) architecture, which keeps the device logic independent of the hardware and of the Matter stack:
 
-### TODO: add drawio graph
+![multisensor_architecture](docs/hexagonal_multisensor_architecture.webp)
 
 - `src/domain/`: `ESensorId`, `EContactState` and `ContactSensorsDomain`, which holds every sensor's state (all start `Open`). `toggle()` flips one sensor and returns its new state.
 - `src/ports/`: the interfaces the adapters are written against:
